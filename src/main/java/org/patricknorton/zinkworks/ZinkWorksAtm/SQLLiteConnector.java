@@ -6,7 +6,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class SQLLiteConnector {
     static int atmBalance = 1500;
-    Map<String, Integer> atmNoteBalance = new HashMap<>();
+    static
+    LinkedHashMap<String, Integer> atmNoteBalance1 = new LinkedHashMap<>();
     Connection connection = null;
 
     Statement statement = null;
@@ -15,6 +16,8 @@ public class SQLLiteConnector {
     public synchronized static SQLLiteConnector getInstance() throws SQLException, ClassNotFoundException {
         if (instance == null) {
             instance = new SQLLiteConnector();
+            instance.insertBaseUser();
+            instance.fillAtm();
         }
         return instance;
     }
@@ -22,27 +25,33 @@ public class SQLLiteConnector {
 
     private SQLLiteConnector() throws SQLException, ClassNotFoundException {
         setDb();
-        reFillAtm();
         statement.setQueryTimeout(30);  // set timeout to 30 sec.
 
         //statement.executeUpdate("drop table if exists account");
-        statement.executeUpdate("create table if not exists account (accountNum integer, pin integer,openingBalance integer, overdraft integer)");
-        //  statement.executeUpdate("insert into account values(123456789, 1234,800,200)");
-        //   statement.executeUpdate("insert into account values(987654321, 4321,1230,150)");
+        statement.executeUpdate("create table if not exists account (accountNum text primary key , pin text,openingBalance integer, overdraft integer)");
+        statement.executeUpdate("create table if not exists atmBalance ( noteValue int primary key, count int)");
+        statement.executeUpdate("create table if not exists recentTransaction ( accountNum text, timestamp long, openingBalance int, newBalance int, amount int )");
+        //statement.getConnection().commit();
+        //  statement.executeUpdate("insert into account values('123456789', '1234',800,200) SELECT '123456789', 'text to insert'  where not exists select 1 from account where accountNum = '123456789'");
+
+    }
+
+    public void insertBaseUser() throws SQLException {
+        statement.executeUpdate("insert or ignore into account values('123456789', '1234',800,200) ");
+        statement.executeUpdate("insert or ignore into account values('987654321', '4321',1230,150)");
+    }
+
+
+
+    private void fillAtm() throws SQLException {
+        statement.executeUpdate("insert or ignore into atmBalance values(50, 10) ");
+        statement.executeUpdate("insert or ignore into atmBalance values(20, 30)");
+        statement.executeUpdate("insert or ignore into atmBalance values(10, 30)");
+        statement.executeUpdate("insert or ignore into atmBalance values(5, 20)");
+
     }
 
     /**
-     * This refills the ATM everytime the server is started
-     */
-    private void reFillAtm() {
-        atmNoteBalance.put("50", 10);
-        atmNoteBalance.put("20", 30);
-        atmNoteBalance.put("10", 30);
-        atmNoteBalance.put("5", 20);
-    }
-
-    /**
-     *
      * @throws ClassNotFoundException
      */
     public void setDb() throws ClassNotFoundException {
@@ -75,33 +84,27 @@ public class SQLLiteConnector {
     }
 
     /**
-     *
-     *
      * @param accountNumber
      * @param pin
      * @return
      * @throws SQLException
      */
-    public Account getAccount(int accountNumber, int pin) throws SQLException {
-        String query = String.format("select * from account WHERE accountNum = %d AND pin = %d;", accountNumber, pin);
-        System.out.println(query);
+    public Account getAccount(String accountNumber, String pin) throws SQLException {
+        String query = String.format("select * from account WHERE accountNum = %s AND pin = %s;", accountNumber, pin);
         ResultSet rs = statement.executeQuery(query);
         Account account = null;
         while (rs.next()) {
             // read the result set
-            System.out.println("accountNum = " + rs.getString("accountNum"));
-            int accountId = rs.getInt("accountNum");
-            int pinFromAccount = rs.getInt("pin");
+            String accountId = rs.getString("accountNum");
+            String pinFromAccount = rs.getString("pin");
             int openingBalance = rs.getInt("openingBalance");
             int overdraft = rs.getInt("overdraft");
             account = new Account(accountId, pinFromAccount, openingBalance, overdraft);
-            //  System.out.println("pin = " + rs.getInt("pin"));
         }
         return account;
     }
 
     /**
-     *
      * @return
      * @throws SQLException
      */
@@ -113,8 +116,8 @@ public class SQLLiteConnector {
         List<Account> accountList = new ArrayList<>();
         while (rs.next()) {
             // read the result set
-            int accountId = rs.getInt("accountNum");
-            int pinFromAccount = rs.getInt("pin");
+            String accountId = rs.getString("accountNum");
+            String pinFromAccount = rs.getString("pin");
             int openingBalance = rs.getInt("openingBalance");
             int overdraft = rs.getInt("overdraft");
             account = new Account(accountId, pinFromAccount, openingBalance, overdraft);
@@ -126,72 +129,127 @@ public class SQLLiteConnector {
     }
 
     /**
-     *
      * @param accountNum
      * @param pin
      * @param amount
      * @return
      * @throws SQLException
      */
-    public String withdrawMoney(int accountNum, int pin, int amount) throws SQLException {
+    public String withdrawMoney(String accountNum, String pin, int amount) throws SQLException {
         StringBuilder returnString = new StringBuilder();
         Account account = getAccount(accountNum, pin);
-        if (atmBalance - amount > 0) {
-            LinkedHashMap<String, Integer> notesDispenced = calculateNotesRemaining(amount);
-            int amountActuallyTakenOut = calculateAmountDeducted(notesDispenced);
+        if ((atmBalance) - amount > 0) {
+
+            LinkedHashMap<String, Integer> notesDispensed = calculateNotesRemaining(amount);
+            System.out.println("NotesDispensed: " + notesDispensed);
+            int amountActuallyTakenOut = calculateAmountDeducted(notesDispensed);
             int newBalance = account.getOpeningBalance() - amountActuallyTakenOut;
 
-            if (newBalance > account.getOverDraft()) {
+            if (newBalance > (-account.getOverDraft())) {
                 System.out.println("New Balance " + newBalance);
-                String updateQuery = String.format("UPDATE account SET openingBalance = %d WHERE accountNum = %d AND pin = %d", newBalance, account.getAccountId(), account.getPin());
+                String updateQuery = String.format("UPDATE account SET openingBalance = %d WHERE accountNum = %s AND pin = %s", newBalance, account.getAccountId(), account.getPin());
                 statement.executeUpdate(updateQuery);
-                returnString.append( "Update successful\n");
-                returnString.append(printoutNotesDispenced(notesDispenced));
+                returnString.append("Update successful\n");
+                returnString.append(String.format("New Balance is: %d \n", newBalance));
+                returnString.append(printoutNotesDispenced(notesDispensed));
+                removeFromAtm(notesDispensed);
+                insertIntoTransaction(account.getAccountId(), account.getOpeningBalance(), newBalance, amount);
+
             } else {
                 returnString.append("You have Exceeded your overdraft limit");
             }
 
         } else {
-            returnString.append( "ERROR: Not enough cash in the ATM");
+            returnString.append("ERROR: Not enough cash in the ATM");
         }
         return returnString.toString();
     }
 
+    public void insertIntoTransaction(String accountNum, int oldBalance, int newBalance, int amount) throws SQLException {
+        String update = "insert into recentTransaction values (%s, %d, %d, %d, %d)";
+        System.out.println(String.format(update, accountNum, System.currentTimeMillis(), oldBalance, newBalance, amount));
+        statement.executeUpdate(String.format(update, accountNum, System.currentTimeMillis(), oldBalance, newBalance, amount));
+    }
+
+    public  List<Transaction> readTransaction(String accountNum) throws SQLException {
+        String query = "select * from recentTransaction where accountNum = %s";
+        List<Transaction> transactionList = new ArrayList<>();
+
+        ResultSet rs = statement.executeQuery(String.format(query, accountNum));
+
+        while (rs.next()) {
+            int notesValue = rs.getInt("openingBalance");
+            int newBalance = rs.getInt("newBalance");
+            int amount = rs.getInt("amount");
+            int timestamp = rs.getInt("timestamp");
+            transactionList.add(new Transaction(notesValue, newBalance, amount, timestamp));
+        }
+        return transactionList;
+
+    }
+    public void removeFromAtm(LinkedHashMap <String, Integer> atmNoteBalance) {
+        String query = "update atmBalance  set count = count- %d  where noteValue = %d";
+        atmNoteBalance.keySet().stream().forEach(k -> {
+            int noteValueInteger = Integer.parseInt(k);
+            try {
+                statement.executeUpdate(String.format(query, atmNoteBalance.get(k).intValue(), noteValueInteger));
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
     /**
      * This method will calculate how many notes are remaining in the ATM
+     *
      * @param amountToWidraw
      * @return
      */
-    public LinkedHashMap calculateNotesRemaining(int amountToWidraw) {
+    public LinkedHashMap calculateNotesRemaining(int amountToWidraw) throws SQLException {
         AtomicInteger remainder = new AtomicInteger(amountToWidraw);
         StringBuilder sb = new StringBuilder();
+
         LinkedHashMap<String, Integer> notesWidrawn = new LinkedHashMap<>();
-        atmNoteBalance.keySet().stream().forEach(k -> {
-            int keyAsInt = Integer.parseInt(k);
+
+        String query = "select * from atmBalance order by noteValue DESC";
+        ResultSet rs = statement.executeQuery(query);
+        while (rs.next()) {
+            int notesValue = rs.getInt("noteValue");
+            int count = rs.getInt("count");
             int notesToRemove;
-            if (remainder.get() % keyAsInt > 1 && atmNoteBalance.get(k) > (remainder.get()/keyAsInt)) {
-                notesToRemove = remainder.get() / keyAsInt;
-                atmNoteBalance.put(k, atmNoteBalance.get(k) - notesToRemove);
-                remainder.set(remainder.get() % keyAsInt);
+            if (remainder.get() % notesValue > 1 && count > 0) {
+                notesToRemove = remainder.get() / notesValue;
+              //  atmNoteBalance.put(k, atmNoteBalance.get(k) - notesToRemove);
+                remainder.set(remainder.get() % notesValue);
                 if (notesToRemove != 0) {
-                    notesWidrawn.put(k, notesToRemove);
+                    notesWidrawn.put(notesValue +"", notesToRemove);
                 }
-                sb.append(String.format("%s euro notes: %d \n", k, notesToRemove));
+                sb.append(String.format("%s euro notes: %d \n", notesValue, notesToRemove));
+            } else if (remainder.get() % notesValue == 0 && count > 0) {
+                notesToRemove = remainder.get() / notesValue;
+              //  atmNoteBalance.put(k, atmNoteBalance.get(k) - notesToRemove);
+                remainder.set(remainder.get() % notesValue);
+                if (notesToRemove != 0) {
+                    notesWidrawn.put(notesValue + "", notesToRemove);
+                }
             }
-        });
+        };
 
-        sb.append(String.format("NOTE: %d euro is too small for us to widraw", remainder.get()));
+        sb.append(String.format("NOTE: %d euro is too small for us to withdraw", remainder.get()));
 
-        System.out.println("sb: " + sb);
+        System.out.println(sb);
+        System.out.println(notesWidrawn);
+        notesWidrawn.keySet().forEach(k -> System.out.println(k));
         return notesWidrawn;
     }
 
-    public int calculateAmountDeducted (LinkedHashMap<String, Integer> atmNotesRemoved) {
+    public int calculateAmountDeducted(LinkedHashMap<String, Integer> atmNotesRemoved) {
         final int[] remainingBalance = {0};
-        atmNotesRemoved.keySet().forEach(k-> {
+        atmNotesRemoved.keySet().forEach(k -> {
             int keyValue = Integer.parseInt(k);
-            remainingBalance[0] = remainingBalance[0] +  (atmNotesRemoved.get(k).intValue() * keyValue);
+            remainingBalance[0] = remainingBalance[0] + (atmNotesRemoved.get(k).intValue() * keyValue);
         });
+        System.out.println("amaountDeducted: " + remainingBalance[0]);
         return remainingBalance[0];
     }
 
@@ -201,9 +259,18 @@ public class SQLLiteConnector {
         return sb.toString();
     }
 
-    public String notesRemainingInAtm () {
+    public String notesRemainingInAtm() throws SQLException {
+        System.out.println("notesRemainingInAtm");
         StringBuilder sb = new StringBuilder();
-        atmNoteBalance.keySet().stream().forEach(k -> sb.append(String.format("%s euro notes: %d \n", k, atmNoteBalance.get(k))));
+        ResultSet rs = statement.executeQuery("select * from atmBalance");
+        int rowCount = 0;
+        while (rs.next()) {
+            rowCount++;
+            int notesValue = rs.getInt("noteValue");
+            int count = rs.getInt("count");
+            sb.append(String.format("\n%d euro notes: %d ", notesValue, count));
+        }
+
         return sb.toString();
     }
 

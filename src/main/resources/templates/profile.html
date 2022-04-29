@@ -1,11 +1,50 @@
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Getting Started: Serving Web Content</title>
+    <title>Profile</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <!--    <link rel="stylesheet" th:href="@{/style/styles.css}">-->
+    <link th:href="@{/styles/styles.css}" rel="stylesheet"/>
 </head>
 <body>
-<p th:text="'Hello, ' + ${accountNum} + '!'"/>
+<h1 th:text="'Hello, ' + ${accountNum} + '!'"/>
+<p th:text="'Your current balance is: ' + ${openingBalance} + ''"/>
+<p th:text="'Your overdraft  is: ' + ${overdraft} + ''"/>
+<p data-th-utext="'Message: ' + ${#strings.replace(message, newLineChar, '&lt;br &gt;')}"/>
+<table>
+    <thead>
+    <tr>
+        <th> Timestamp </th>
+        <th> Opening Balance </th>
+        <th> New Balance </th>
+        <th> Amount </th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="transaction : ${transactionList}">
+        <td><span th:text="${transaction.timestamp}"> Timestamp </span></td>
+        <td><span th:text="${transaction.openingBalance}"> Opening Balance </span></td>
+        <td><span th:text="${transaction.newBalance}"> New Balance </span></td>
+        <td><span th:text="${transaction.amount}"> Amount </span></td>
+    </tr>
+    </tbody>
+</table>
+<form action="/withdraw?" method="post">
+    <div class="imgcontainer">
+            <span onclick="document.getElementById('id01').style.display='none'" class="close"
+                  title="Close Modal">&times;</span>
+        <img th:src="@{/images/zinkworks.png}" alt="Avatar" class="avatar">
+    </div>
+    <div class="container">
+        <label for="accountNum"><b>Username</b></label>
+        <input type="text" th:data1="${accountNum}" placeholder="Enter Username" name="accountNum" required>
+        <label for="pin"><b>Password</b></label>
+        <input type="password" th:data1="${pin}" placeholder="Enter Password" name="pin" required>
+        <label for="withrdrawAmount"><b>amount to withdraw</b></label>
+        <input type="text" placeholder="Enter amount" name="windraw" required>
+        <button type="submit">Withdraw</button>
+    </div>
+</form>
+<button><a href="/">Logout</a></button>
 </body>
-</html>
 </html>

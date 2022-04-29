@@ -53,5 +53,7 @@ public class test {
         //  testClass.blank();
 
        testClass.somethingElse(testClass.calculateNotesRemaining(127));
+
+        System.out.println(1%4);
     }
 }

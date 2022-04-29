@@ -1,27 +1,61 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Getting Started: Serving Web Content</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta charset="UTF-8">
+    <title>ZinkWorks ATM</title>
+    <!--    <link rel="stylesheet" th:href="@{/style/styles.css}">-->
+
+    <link href="styles/styles.css" rel="stylesheet"/>
+
 </head>
 <body>
-<center> <h1> Student Login Form </h1> </center>
-<form>
-    <div class="container">
-        <label>Username : </label>
-        <input type="text" placeholder="Enter Username" name="accountNum" required>
-        <label>Password : </label>
-        <input type="password" placeholder="Enter Password" name="pin" required>
-        <button type="submit">Login</button>
-        <script>
-function myFunction() {
-var accountId =  document.getElementById("accountNum").value
-var pin =  document.getElementById("myText").value
 
+<h2>ZinkWorks atm</h2>
+
+<button onclick="document.getElementById('id01').style.display='block'" style="width:auto;">Login</button>
+
+<div id="id01" class="modal">
+
+    <form class="modal-content animate" action="/profile?" method="post">
+        <div class="imgcontainer">
+            <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">&times;</span>
+            <img src="images/zinkworks.png" alt="Avatar" class="avatar">
+        </div>
+
+        <div class="container">
+            <label for="accountNum"><b>Username</b></label>
+            <input type="text" placeholder="Enter Username" name="accountNum" required>
+
+            <label for="pin"><b>Password</b></label>
+            <input type="password" placeholder="Enter Password" name="pin" required>
+
+            <button type="submit">Login</button>
+
+        </div>
+
+        <div class="container" style="background-color:#f1f1f1">
+            <button type="button" onclick="document.getElementById('id01').style.display='none'" class="cancelbtn">
+                Cancel
+            </button>
+            <span class="psw">Forgot <a href="#">password?</a></span>
+        </div>
+    </form>
+</div>
+
+<script>
+// Get the modal
+var modal = document.getElementById('id01');
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
 }
+
+
+
 </script>
-    </div>
-</form>
-<p>Get your greeting <a href="/profile">here</a></p>
+
 </body>
 </html>
