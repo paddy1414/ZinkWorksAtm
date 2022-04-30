@@ -1,4 +1,4 @@
-package org.patricknorton.zinkworks.ZinkWorksAtm;
+package org.patricknorton.zinkworks.ZinkWorksAtm.Objects;
 
 public class Transaction {
     int openingBalance, newBalance, amount;

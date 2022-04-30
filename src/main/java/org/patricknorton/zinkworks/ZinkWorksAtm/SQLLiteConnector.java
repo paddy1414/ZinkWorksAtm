@@ -1,5 +1,8 @@
 package org.patricknorton.zinkworks.ZinkWorksAtm;
 
+import org.patricknorton.zinkworks.ZinkWorksAtm.Objects.Account;
+import org.patricknorton.zinkworks.ZinkWorksAtm.Objects.Transaction;
+
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,7 +20,7 @@ public class SQLLiteConnector {
         if (instance == null) {
             instance = new SQLLiteConnector();
             instance.insertBaseUser();
-            instance.fillAtm();
+            // instance.fillAtm();
         }
         return instance;
     }
@@ -41,6 +44,18 @@ public class SQLLiteConnector {
         statement.executeUpdate("insert or ignore into account values('987654321', '4321',1230,150)");
     }
 
+    public void resetBaseUsers() throws SQLException {
+        statement.executeUpdate("update account set openingBalance =800 where accountNum = '123456789'");
+        statement.executeUpdate("update account set openingBalance =1230 where accountNum = '987654321'");
+    }
+
+    public void resetATMNotes() throws SQLException {
+        statement.executeUpdate("update atmBalance set count = 10 where noteValue = 50");
+        statement.executeUpdate("update atmBalance set count = 30 where noteValue = 20");
+        statement.executeUpdate("update atmBalance set count = 30 where noteValue = 10");
+        statement.executeUpdate("update atmBalance set count = 20 where noteValue = 5");
+
+    }
 
 
     private void fillAtm() throws SQLException {
@@ -110,7 +125,6 @@ public class SQLLiteConnector {
      */
     public List<Account> getAll() throws SQLException {
         String query = String.format("select * from account");
-        System.out.println(query);
         ResultSet rs = statement.executeQuery(query);
         Account account = null;
         List<Account> accountList = new ArrayList<>();
@@ -147,13 +161,13 @@ public class SQLLiteConnector {
 
             if (newBalance > (-account.getOverDraft())) {
                 System.out.println("New Balance " + newBalance);
-                String updateQuery = String.format("UPDATE account SET openingBalance = %d WHERE accountNum = %s AND pin = %s", newBalance, account.getAccountId(), account.getPin());
+                String updateQuery = String.format("UPDATE account SET openingBalance = %d WHERE accountNum = %s AND pin = %s", newBalance, account.getAccountNum(), account.getPin());
                 statement.executeUpdate(updateQuery);
                 returnString.append("Update successful\n");
                 returnString.append(String.format("New Balance is: %d \n", newBalance));
                 returnString.append(printoutNotesDispenced(notesDispensed));
                 removeFromAtm(notesDispensed);
-                insertIntoTransaction(account.getAccountId(), account.getOpeningBalance(), newBalance, amount);
+                insertIntoTransaction(account.getAccountNum(), account.getOpeningBalance(), newBalance, amount);
 
             } else {
                 returnString.append("You have Exceeded your overdraft limit");
@@ -167,11 +181,10 @@ public class SQLLiteConnector {
 
     public void insertIntoTransaction(String accountNum, int oldBalance, int newBalance, int amount) throws SQLException {
         String update = "insert into recentTransaction values (%s, %d, %d, %d, %d)";
-        System.out.println(String.format(update, accountNum, System.currentTimeMillis(), oldBalance, newBalance, amount));
         statement.executeUpdate(String.format(update, accountNum, System.currentTimeMillis(), oldBalance, newBalance, amount));
     }
 
-    public  List<Transaction> readTransaction(String accountNum) throws SQLException {
+    public List<Transaction> readTransaction(String accountNum) throws SQLException {
         String query = "select * from recentTransaction where accountNum = %s";
         List<Transaction> transactionList = new ArrayList<>();
 
@@ -187,7 +200,8 @@ public class SQLLiteConnector {
         return transactionList;
 
     }
-    public void removeFromAtm(LinkedHashMap <String, Integer> atmNoteBalance) {
+
+    public void removeFromAtm(LinkedHashMap<String, Integer> atmNoteBalance) {
         String query = "update atmBalance  set count = count- %d  where noteValue = %d";
         atmNoteBalance.keySet().stream().forEach(k -> {
             int noteValueInteger = Integer.parseInt(k);
@@ -217,28 +231,33 @@ public class SQLLiteConnector {
             int notesValue = rs.getInt("noteValue");
             int count = rs.getInt("count");
             int notesToRemove;
-            if (remainder.get() % notesValue > 1 && count > 0) {
+            if (remainder.get() % notesValue > 0 && count > 0) {
                 notesToRemove = remainder.get() / notesValue;
-              //  atmNoteBalance.put(k, atmNoteBalance.get(k) - notesToRemove);
-                remainder.set(remainder.get() % notesValue);
-                if (notesToRemove != 0) {
-                    notesWidrawn.put(notesValue +"", notesToRemove);
-                }
-                sb.append(String.format("%s euro notes: %d \n", notesValue, notesToRemove));
-            } else if (remainder.get() % notesValue == 0 && count > 0) {
-                notesToRemove = remainder.get() / notesValue;
-              //  atmNoteBalance.put(k, atmNoteBalance.get(k) - notesToRemove);
+                //  atmNoteBalance.put(k, atmNoteBalance.get(k) - notesToRemove);
                 remainder.set(remainder.get() % notesValue);
                 if (notesToRemove != 0) {
                     notesWidrawn.put(notesValue + "", notesToRemove);
                 }
+                sb.append(String.format("%s euro notes: %d \n", notesValue, notesToRemove));
+            } else if (remainder.get() % notesValue == 0 && count > 0) {
+                //  atmNoteBalance.put(k, atmNoteBalance.get(k) - notesToRemove);
+                if ((remainder.get() / notesValue) < count) {
+                    notesToRemove = remainder.get() / notesValue;
+                    remainder.set(remainder.get() % notesValue);
+                } else {
+                    notesToRemove = count;
+                    remainder.set(remainder.get() - (count * notesValue));
+                }
+                if (notesToRemove != 0) {
+                    notesWidrawn.put(notesValue + "", notesToRemove);
+                }
+
             }
-        };
+        }
+        ;
 
         sb.append(String.format("NOTE: %d euro is too small for us to withdraw", remainder.get()));
 
-        System.out.println(sb);
-        System.out.println(notesWidrawn);
         notesWidrawn.keySet().forEach(k -> System.out.println(k));
         return notesWidrawn;
     }
@@ -275,4 +294,13 @@ public class SQLLiteConnector {
     }
 
 
+    public String getMaxWithdrawal(int openingBalance, int overdraft) {
+        StringBuilder sb = new StringBuilder();
+        int maximumWithrdrawal = openingBalance + overdraft;
+        int balaceAfterMax = openingBalance - overdraft;
+        sb.append(String.format("your Maximum withdrawal is %d", maximumWithrdrawal));
+        sb.append((balaceAfterMax < 0 ? String.format("this would leave you in arears of %d", balaceAfterMax) : "\nHave a wonderful day"));
+
+        return sb.toString();
+    }
 }

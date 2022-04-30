@@ -1,25 +1,25 @@
-package org.patricknorton.zinkworks.ZinkWorksAtm;
+package org.patricknorton.zinkworks.ZinkWorksAtm.Objects;
 
 import java.util.Objects;
 
 @SuppressWarnings("unused")
 public class Account {
-    private String accountId,pin;
+    private String accountNum,pin;
     private int openingBalance,overDraft;
 
     public Account(String accountId, String pin, int openingBalance, int overDraft) {
-        this.accountId = accountId;
+        this.accountNum = accountId;
         this.pin = pin;
         this.openingBalance = openingBalance;
         this.overDraft = overDraft;
     }
 
-    public String getAccountId() {
-        return accountId;
+    public String getAccountNum() {
+        return accountNum;
     }
 
-    public void setAccountId(String accountId) {
-        this.accountId = accountId;
+    public void setAccountNum(String accountId) {
+        this.accountNum = accountId;
     }
 
     public String getPin() {
@@ -48,8 +48,8 @@ public class Account {
 
     @Override
     public String toString() {
-        return "org.patricknorton.zinkworks.ZinkWorksAtm.Account{" +
-                "accountId=" + accountId +
+        return "org.patricknorton.zinkworks.ZinkWorksAtm.Objects.Account{" +
+                "accountNum=" + accountNum +
                 ", pin=" + pin +
                 ", openingBalance=" + openingBalance +
                 ", overDraft=" + overDraft +
@@ -61,11 +61,11 @@ public class Account {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Account account = (Account) o;
-        return openingBalance == account.openingBalance && overDraft == account.overDraft && Objects.equals(accountId, account.accountId) && Objects.equals(pin, account.pin);
+        return openingBalance == account.openingBalance && overDraft == account.overDraft && Objects.equals(accountNum, account.accountNum) && Objects.equals(pin, account.pin);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(accountId, pin, openingBalance, overDraft);
+        return Objects.hash(accountNum, pin, openingBalance, overDraft);
     }
 }
