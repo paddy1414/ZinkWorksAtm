@@ -89,8 +89,6 @@ public class AtmResource {
     @RequestMapping(value = "/withdraw", method = RequestMethod.POST)
     public String getWindraw(@RequestParam String accountNum, @RequestParam String pin, @RequestParam String withdraw, Model model)
             throws SQLException, ClassNotFoundException {
-        int parsedAccountNum = Integer.parseInt(accountNum);
-        int parsedPin = Integer.parseInt(pin);
         int parsedWidraw = Integer.parseInt(withdraw);
         String result = SQLLiteConnector.getInstance().withdrawMoney(accountNum, pin, parsedWidraw);
 
