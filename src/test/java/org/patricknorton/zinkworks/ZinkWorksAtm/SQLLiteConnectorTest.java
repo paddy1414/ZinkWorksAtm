@@ -61,8 +61,9 @@ class SQLLiteConnectorTest {
         System.out.println("Test calculateNotesRemaining");
         LinkedHashMap<String, Integer> testTrue = new LinkedHashMap<>();
         SQLLiteConnector sqlLiteConnector = SQLLiteConnector.getInstance();
+        sqlLiteConnector.fillAtm();
         sqlLiteConnector.resetATMNotes();
-        //testTrue.put("50",0);
+
         testTrue.put("20", 1);
 
         Assertions.assertEquals(testTrue, sqlLiteConnector.calculateNotesRemaining(21));
@@ -73,6 +74,7 @@ class SQLLiteConnectorTest {
         System.out.println("Test calculateNotesRemaining");
         LinkedHashMap<String, Integer> testTrue = new LinkedHashMap<>();
         SQLLiteConnector sqlLiteConnector = SQLLiteConnector.getInstance();
+        sqlLiteConnector.fillAtm();
         sqlLiteConnector.resetATMNotes();
 
         testTrue.put("50", 10);
@@ -127,6 +129,7 @@ class SQLLiteConnectorTest {
         String expected = "Update successful\nNew Balance is: 780 \n20 euro notes: 1 \n";
         SQLLiteConnector sqlLiteConnector = SQLLiteConnector.getInstance();
         sqlLiteConnector.resetBaseUsers();
+        sqlLiteConnector.fillAtm();
         sqlLiteConnector.resetATMNotes();
         String actual = sqlLiteConnector.withdrawMoney("123456789", "1234", 21);
         Assertions.assertEquals(expected, actual);
@@ -137,6 +140,8 @@ class SQLLiteConnectorTest {
         String expected = "Update successful\nNew Balance is: 750 \n50 euro notes: 1 \n";
         SQLLiteConnector sqlLiteConnector = SQLLiteConnector.getInstance();
         sqlLiteConnector.resetBaseUsers();
+        sqlLiteConnector.fillAtm();
+        sqlLiteConnector.resetATMNotes();
         String actual = sqlLiteConnector.withdrawMoney("123456789", "1234", 51);
         Assertions.assertEquals(expected, actual);
     }

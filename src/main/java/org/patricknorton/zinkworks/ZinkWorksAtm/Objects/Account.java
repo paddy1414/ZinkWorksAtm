@@ -1,11 +1,15 @@
 package org.patricknorton.zinkworks.ZinkWorksAtm.Objects;
 
+import com.google.gson.annotations.Expose;
+
 import java.util.Objects;
 
 @SuppressWarnings("unused")
 public class Account {
-    private String accountNum,pin;
-    private int openingBalance,overDraft;
+    @Expose
+    private String accountNum, pin;
+    @Expose
+    private int openingBalance, overDraft;
 
     public Account(String accountId, String pin, int openingBalance, int overDraft) {
         this.accountNum = accountId;
@@ -48,9 +52,9 @@ public class Account {
 
     @Override
     public String toString() {
-        return "org.patricknorton.zinkworks.ZinkWorksAtm.Objects.Account{" +
-                "accountNum=" + accountNum +
-                ", pin=" + pin +
+        return "Account{" +
+                "accountNum='" + accountNum + '\'' +
+                ", pin='" + pin + '\'' +
                 ", openingBalance=" + openingBalance +
                 ", overDraft=" + overDraft +
                 '}';

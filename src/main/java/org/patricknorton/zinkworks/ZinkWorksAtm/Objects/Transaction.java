@@ -1,8 +1,12 @@
 package org.patricknorton.zinkworks.ZinkWorksAtm.Objects;
 
+import com.google.gson.annotations.Expose;
+
 public class Transaction {
+    @Expose
     int openingBalance, newBalance, amount;
-    long timestamp;
+    @Expose
+    Long timestamp;
     public Transaction(int openingBalance, int newBalance, int amount, long timestamp) {
         this.openingBalance = openingBalance;
         this.newBalance = newBalance;
@@ -10,11 +14,11 @@ public class Transaction {
         this.timestamp = timestamp;
     }
 
-    public long getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(long timestamp) {
+    public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -40,5 +44,15 @@ public class Transaction {
 
     public void setAmount(int amount) {
         this.amount = amount;
+    }
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "openingBalance=" + openingBalance +
+                ", newBalance=" + newBalance +
+                ", amount=" + amount +
+                ", timestamp=" + timestamp +
+                '}';
     }
 }

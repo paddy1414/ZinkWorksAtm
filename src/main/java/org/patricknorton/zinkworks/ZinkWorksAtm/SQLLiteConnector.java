@@ -58,7 +58,7 @@ public class SQLLiteConnector {
     }
 
 
-    private void fillAtm() throws SQLException {
+    public void fillAtm() throws SQLException {
         statement.executeUpdate("insert or ignore into atmBalance values(50, 10) ");
         statement.executeUpdate("insert or ignore into atmBalance values(20, 30)");
         statement.executeUpdate("insert or ignore into atmBalance values(10, 30)");

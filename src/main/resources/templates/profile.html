@@ -6,48 +6,90 @@
     <link th:href="@{/styles/styles.css}" rel="stylesheet"/>
 </head>
 <body>
+<script type="text/javascript" th:src="@{/scripts/scripts.js}"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.9.4/jquery.dataTables.min.js"></script>
 <h1 th:text="'Hello, ' + ${account.accountNum} + '!'"/>
 <p th:text="'Your current balance is: ' + ${account.openingBalance} + ''"/>
 <p th:text="'Your overdraft  is: ' + ${account.overDraft} + ''"/>
 <p data-th-utext="'Message: ' + ${#strings.replace(message, newLineChar, '&lt;br &gt;')}"/>
-<table>
-    <thead>
-    <tr>
-        <th> Timestamp </th>
-        <th> Opening Balance </th>
-        <th> New Balance </th>
-        <th> Amount </th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="transaction : ${transactionList}">
-        <td><span th:text="${transaction.timestamp}"> Timestamp </span></td>
-        <td><span th:text="${transaction.openingBalance}"> Opening Balance </span></td>
-        <td><span th:text="${transaction.newBalance}"> New Balance </span></td>
-        <td><span th:text="${transaction.amount}"> Amount </span></td>
-    </tr>
-    </tbody>
-</table>
+<p>
+    <button class="glow-on-hover" th:onclick="sortTable()">Sort</button>
+</p>
+<div class="container">
+    <table class="table table-striped table-class" id="transactions">
+        <thead>
+        <tr>
+            <th> Timestamp</th>
+            <th> Opening Balance</th>
+            <th> New Balance</th>
+            <th> Amount</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="transaction : ${transactionList}">
+            <td><span th:text=" ${transaction.timestamp}  "> Timestamp </span></td>
+            <td><span th:text="  ${transaction.openingBalance}  "> Opening Balance </span></td>
+            <td><span th:text="  ${transaction.newBalance}  "> New Balance </span></td>
+            <td><span th:text="  ${transaction.amount}  "> Amount </span></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 
-<!--<button th:onclick="window.location.href='/maxWithdrawal?accountNum='${account.accountNum}'&pin='${account.pin}''">Max withdrawal</button>-->
-<a th:href="@{/maxWithdrawal?(accountNum=${account.accountNum},pin=${account.pin})}">Max withdrawal</a>
 
-<form action="/withdraw?" method="post">
-    <div class="imgcontainer">
-            <span onclick="document.getElementById('id01').style.display='none'" class="close"
-                  title="Close Modal">&times;</span>
-        <img th:src="@{/images/zinkworks.png}" alt="Avatar" class="avatar">
-    </div>
-    <div class="container">
-        <label for="accountNum"><b>Username</b></label>
-        <input type="text" th:data1="${account.accountNum}" placeholder="Enter Username" name="accountNum" required>
-        <label for="pin"><b>Password</b></label>
-        <input type="password" th:data1="${account.pin}" placeholder="Enter Password" name="pin" required>
-        <label for="withrdrawAmount"><b>amount to withdraw</b></label>
-        <input type="text" placeholder="Enter amount" name="withdraw" required>
-        <button type="submit">Withdraw</button>
-    </div>
-</form>
-<button><a href="/">Logout</a></button>
+<a th:href="@{/web/maxWithdrawal?(accountNum=${account.accountNum},pin=${account.pin})}">Max withdrawal</a>
+
+<button class="glow-on-hover" onclick="document.getElementById('id01').style.display='block'" style="width:auto;">Withdraw</button>
+
+<div id="id01" class="modal">
+
+    <form class="modal-content animate" action="/web/withdraw?" method="post">
+        <div class="imgcontainer">
+            <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">&times;</span>
+            <img src="images/zinkworks.png" alt="Avatar" class="avatar">
+        </div>
+
+        <div class="container">
+            <label for="accountNum"><b>Username</b></label>
+            <input type="text" placeholder="Enter Username" name="accountNum" required>
+
+            <label for="pin"><b>Password</b></label>
+            <input type="password" placeholder="Enter Password" name="pin" required>
+
+            <label for="withdrawAmount"><b>amount to withdraw</b></label>
+            <input type="text" placeholder="Enter amount" name="withdraw" required>
+
+            <button class="glow-on-hover" id="withdraw" type="submit">Withdraw</button>
+
+        </div>
+
+        <div class="container" style="background-color:#f1f1f1">
+            <button  type="button" onclick="document.getElementById('id01').style.display='none'" class="cancelbtn">
+                Cancel
+            </button>
+            <span class="psw">Forgot <a href="#">password?</a></span>
+        </div>
+    </form>
+</div>
+
+
+<script>
+// Get the modal
+var modal = document.getElementById('id01');
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+
+
+
+</script>
+
+<button id="logoutbtn"  class="glow-on-hover"><a href="/">Logout</a></button>
 </body>
 </html>

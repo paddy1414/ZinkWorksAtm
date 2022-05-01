@@ -1,17 +1,21 @@
-package org.patricknorton.zinkworks.ZinkWorksAtm;
+package org.patricknorton.zinkworks.ZinkWorksAtm.rest;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.patricknorton.zinkworks.ZinkWorksAtm.Objects.Account;
 import org.patricknorton.zinkworks.ZinkWorksAtm.Objects.Transaction;
-import org.springframework.stereotype.Controller;
+import org.patricknorton.zinkworks.ZinkWorksAtm.SQLLiteConnector;
 import org.springframework.ui.Model;
-
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
 import java.util.List;
 
-@Controller
-public class AtmResource {
+@RestController
+@RequestMapping("/api")
+public class AtmResourceRest {
 
     /**
      * This will return the account information for eachh user
@@ -21,58 +25,48 @@ public class AtmResource {
      * @param model      model
      * @return
      */
-    @RequestMapping(value = "/profile", method = RequestMethod.POST)
-    public String login(@RequestParam String accountNum, @RequestParam String pin, Model model) {
-
-        String returnPage = "error";
+    @PostMapping(value = "/profile")
+    public String login(@RequestParam String accountNum, @RequestParam String pin) {
+        System.out.println(accountNum);
+        Account account;
+        JSONObject returnObject;
         try {
-            Account account = SQLLiteConnector.getInstance().getAccount(accountNum, pin);
-            List<Transaction> transactionList = SQLLiteConnector.getInstance().readTransaction(accountNum);
+            account = SQLLiteConnector.getInstance().getAccount(accountNum, pin);
+            returnObject = new JSONObject(new Gson().toJson(account));
             if (account == null) {
-                returnPage = "noUser";
-            } else {
-                model.addAttribute("account", account);
-                model.addAttribute("newLineChar", '\n');
-                model.addAttribute("message", "\nHave a wonderful day \n");
-                model.addAttribute("transactionList", transactionList);
-
-                returnPage = "profile";
+                returnObject = new JSONObject().put("page", "noUser");
             }
 
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
+            returnObject = new JSONObject().put("page", "noUser");
         }
 
-
-        return returnPage;
+        System.out.println();
+        return returnObject.toString();
     }
 
     @RequestMapping(value = "/maxWithdrawal", method = RequestMethod.GET)
     public String maxWithdrawal(@RequestParam String accountNum, @RequestParam String pin, Model model) {
-
-        String returnPage = "error";
+        JSONObject jsonObject = new JSONObject();
         try {
             Account account = SQLLiteConnector.getInstance().getAccount(accountNum, pin);
             List<Transaction> transactionList = SQLLiteConnector.getInstance().readTransaction(accountNum);
             String maxWithdrawal = SQLLiteConnector.getInstance().getMaxWithdrawal(account.getOpeningBalance(), account.getOverDraft());
             if (account == null) {
-                returnPage = "noUser";
+                jsonObject.put("error", "No User");
             } else {
-                System.out.println(account);
-                model.addAttribute("account", account);
-                model.addAttribute("newLineChar", '\n');
-                model.addAttribute("message", maxWithdrawal);
-                model.addAttribute("transactionList", transactionList);
-
-                returnPage = "profile";
+                jsonObject.put("message", maxWithdrawal);
             }
 
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
+            jsonObject.put("message", "error occured");
+
         }
 
 
-        return returnPage;
+        return jsonObject.toString();
     }
 
     /**
@@ -100,8 +94,36 @@ public class AtmResource {
         model.addAttribute("newLineChar", '\n');
         model.addAttribute("transactionList", transactionList);
 
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("result", result);
 
-        return "profile";
+        return jsonObject.toString();
+    }
+
+    /**
+     * This will do the withdrawal from the ATM
+     *
+     * @param accountNum String account number for user
+     * @param pin        Personal Identity Number for the user
+     * @param withdraw   amount the user wants to withdraw
+     * @param model      model
+     * @return Result from withdrawal
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    @RequestMapping(value = "/transactions", method = RequestMethod.GET)
+    public String getTransaction(@RequestParam String accountNum)
+            throws SQLException, ClassNotFoundException {
+        List<Transaction> transactionList = SQLLiteConnector.getInstance().readTransaction(accountNum);
+
+        JSONArray jsonArray = new JSONArray();
+        transactionList.stream().forEach(k -> jsonArray.put(new Gson().toJson(k)));
+
+        JsonArray jsonElements = (JsonArray) new Gson().toJsonTree(transactionList);
+
+
+
+        return jsonElements.toString();
     }
 
     /**
@@ -120,5 +142,6 @@ public class AtmResource {
 
         return "notesRemainingInAtm";
     }
+
 
 }
