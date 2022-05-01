@@ -2,9 +2,7 @@ package org.patricknorton.zinkworks.ZinkWorksAtm.web;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.patricknorton.zinkworks.ZinkWorksAtm.Objects.Account;
 import org.patricknorton.zinkworks.ZinkWorksAtm.Objects.Transaction;
@@ -12,13 +10,14 @@ import org.patricknorton.zinkworks.ZinkWorksAtm.RestOperations;
 import org.patricknorton.zinkworks.ZinkWorksAtm.SQLLiteConnector;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Controller
 @RequestMapping("/web")

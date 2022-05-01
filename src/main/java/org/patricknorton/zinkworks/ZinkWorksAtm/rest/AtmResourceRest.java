@@ -3,12 +3,20 @@ package org.patricknorton.zinkworks.ZinkWorksAtm.rest;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.patricknorton.zinkworks.ZinkWorksAtm.Objects.Account;
 import org.patricknorton.zinkworks.ZinkWorksAtm.Objects.Transaction;
 import org.patricknorton.zinkworks.ZinkWorksAtm.SQLLiteConnector;
+import org.springframework.context.annotation.Bean;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -17,12 +25,15 @@ import java.util.List;
 @RequestMapping("/api")
 public class AtmResourceRest {
 
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
     /**
      * This will return the account information for eachh user
      *
      * @param accountNum String account number for user
      * @param pin        Personal Identity Number for the user
-     * @param model      model
      * @return
      */
     @PostMapping(value = "/profile")
@@ -32,12 +43,14 @@ public class AtmResourceRest {
         JSONObject returnObject;
         try {
             account = SQLLiteConnector.getInstance().getAccount(accountNum, pin);
-            returnObject = new JSONObject(new Gson().toJson(account));
             if (account == null) {
                 returnObject = new JSONObject().put("page", "noUser");
+            } else {
+                returnObject = new JSONObject(new Gson().toJson(account));
+
             }
 
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (ClassNotFoundException | SQLException | JSONException e) {
             e.printStackTrace();
             returnObject = new JSONObject().put("page", "noUser");
         }
@@ -58,6 +71,24 @@ public class AtmResourceRest {
             } else {
                 jsonObject.put("message", maxWithdrawal);
             }
+
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+            jsonObject.put("message", "error occured");
+
+        }
+
+
+        return jsonObject.toString();
+    }
+
+    @RequestMapping(value = "/resetAccounts", method = RequestMethod.POST)
+    public String resetAccount() {
+        JSONObject jsonObject = new JSONObject();
+        try {
+            SQLLiteConnector.getInstance().resetBaseUsers();
+            SQLLiteConnector.getInstance().resetATMNotes();
+
 
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
@@ -104,9 +135,6 @@ public class AtmResourceRest {
      * This will do the withdrawal from the ATM
      *
      * @param accountNum String account number for user
-     * @param pin        Personal Identity Number for the user
-     * @param withdraw   amount the user wants to withdraw
-     * @param model      model
      * @return Result from withdrawal
      * @throws SQLException
      * @throws ClassNotFoundException
@@ -120,7 +148,6 @@ public class AtmResourceRest {
         transactionList.stream().forEach(k -> jsonArray.put(new Gson().toJson(k)));
 
         JsonArray jsonElements = (JsonArray) new Gson().toJsonTree(transactionList);
-
 
 
         return jsonElements.toString();
