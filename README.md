@@ -18,3 +18,5 @@ DOCKER file is attached in root of application
 
 project can be built and deployed from the commandLine with: 
  mvn clean install && docker build -f Dockerfile -t zinkworksatm . && docker run -p 8085:8085 zinkworksatm
+ 
+A test report can be view in `target/site/jacoco/index.html`.  This is generated after each build
