@@ -25,10 +25,6 @@ import java.util.List;
 @RequestMapping("/api")
 public class AtmResourceRest {
 
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
     /**
      * This will return the account information for eachh user
      *
@@ -59,8 +55,14 @@ public class AtmResourceRest {
         return returnObject.toString();
     }
 
+    /**
+     * Used to determine how much the user withdraw total
+     * @param accountNum accountNumber
+     * @param pin pin number
+     * @return
+     */
     @RequestMapping(value = "/maxWithdrawal", method = RequestMethod.GET)
-    public String maxWithdrawal(@RequestParam String accountNum, @RequestParam String pin, Model model) {
+    public String maxWithdrawal(@RequestParam String accountNum, @RequestParam String pin) {
         JSONObject jsonObject = new JSONObject();
         try {
             Account account = SQLLiteConnector.getInstance().getAccount(accountNum, pin);
@@ -82,13 +84,17 @@ public class AtmResourceRest {
         return jsonObject.toString();
     }
 
+    /**
+     * This is used to reset all test account in the db
+     * @return JSON STRING
+     */
     @RequestMapping(value = "/resetAccounts", method = RequestMethod.POST)
     public String resetAccount() {
         JSONObject jsonObject = new JSONObject();
         try {
             SQLLiteConnector.getInstance().resetBaseUsers();
             SQLLiteConnector.getInstance().resetATMNotes();
-
+            jsonObject.put("message", "success");
 
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();

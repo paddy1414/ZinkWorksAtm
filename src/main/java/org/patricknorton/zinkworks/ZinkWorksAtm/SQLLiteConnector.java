@@ -16,6 +16,12 @@ public class SQLLiteConnector {
     Statement statement = null;
     private static SQLLiteConnector instance;
 
+    /**
+     * Used to instanciated this class if there is non avabile
+     * @return
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
     public synchronized static SQLLiteConnector getInstance() throws SQLException, ClassNotFoundException {
         if (instance == null) {
             instance = new SQLLiteConnector();
@@ -26,6 +32,11 @@ public class SQLLiteConnector {
     }
 
 
+    /**
+     * contructer for the SQLLite controucter class
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
     private SQLLiteConnector() throws SQLException, ClassNotFoundException {
         setDb();
         statement.setQueryTimeout(30);  // set timeout to 30 sec.
@@ -83,22 +94,11 @@ public class SQLLiteConnector {
             // it probably means no database file is found
             System.err.println(e.getMessage());
         }
-//        finally
-//        {
-//            try
-//            {
-//                if(connection != null)
-//                    connection.close();
-//            }
-//            catch(SQLException e)
-//            {
-//                // connection close failed.
-//                System.err.println(e);
-//            }
-//        }
+
     }
 
     /**
+     * used to log in
      * @param accountNumber
      * @param pin
      * @return
@@ -120,6 +120,7 @@ public class SQLLiteConnector {
     }
 
     /**
+     * Get all acccounts
      * @return
      * @throws SQLException
      */
