@@ -2,12 +2,18 @@ package org.patricknorton.zinkworks.ZinkWorksAtm;
 
 import org.patricknorton.zinkworks.ZinkWorksAtm.Objects.Account;
 import org.patricknorton.zinkworks.ZinkWorksAtm.Objects.Transaction;
+import org.patricknorton.zinkworks.ZinkWorksAtm.web.AtmResourceHtml;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SQLLiteConnector {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLLiteConnector.class.getSimpleName());
+
     static int atmBalance = 1500;
     static
     LinkedHashMap<String, Integer> atmNoteBalance1 = new LinkedHashMap<>();
@@ -85,7 +91,7 @@ public class SQLLiteConnector {
         Class.forName("org.sqlite.JDBC");
         try {
             String db = "jdbc:sqlite:zinkworks.db";
-            System.out.println(db);
+            LOGGER.info(db);
             // create a database connection
             connection = DriverManager.getConnection(db);
             statement = connection.createStatement();
@@ -137,7 +143,7 @@ public class SQLLiteConnector {
             int overdraft = rs.getInt("overdraft");
             account = new Account(accountId, pinFromAccount, openingBalance, overdraft);
             accountList.add(account);
-            System.out.println(account);
+            LOGGER.info(account.toString());
 
         }
         return accountList;
@@ -156,12 +162,12 @@ public class SQLLiteConnector {
         if ((atmBalance) - amount > 0) {
 
             LinkedHashMap<String, Integer> notesDispensed = calculateNotesRemaining(amount);
-            System.out.println("NotesDispensed: " + notesDispensed);
+            LOGGER.info("NotesDispensed: " + notesDispensed);
             int amountActuallyTakenOut = calculateAmountDeducted(notesDispensed);
             int newBalance = account.getOpeningBalance() - amountActuallyTakenOut;
 
             if (newBalance > (-account.getOverDraft())) {
-                System.out.println("New Balance " + newBalance);
+                LOGGER.info("New Balance " + newBalance);
                 String updateQuery = String.format("UPDATE account SET openingBalance = %d WHERE accountNum = %s AND pin = %s", newBalance, account.getAccountNum(), account.getPin());
                 statement.executeUpdate(updateQuery);
                 returnString.append("Update successful\n");
@@ -259,7 +265,7 @@ public class SQLLiteConnector {
 
         sb.append(String.format("NOTE: %d euro is too small for us to withdraw", remainder.get()));
 
-        notesWidrawn.keySet().forEach(k -> System.out.println(k));
+        notesWidrawn.keySet().forEach(k -> LOGGER.info(k));
         return notesWidrawn;
     }
 
@@ -269,7 +275,7 @@ public class SQLLiteConnector {
             int keyValue = Integer.parseInt(k);
             remainingBalance[0] = remainingBalance[0] + (atmNotesRemoved.get(k).intValue() * keyValue);
         });
-        System.out.println("amaountDeducted: " + remainingBalance[0]);
+        LOGGER.info("amaountDeducted: " + remainingBalance[0]);
         return remainingBalance[0];
     }
 
@@ -280,7 +286,7 @@ public class SQLLiteConnector {
     }
 
     public String notesRemainingInAtm() throws SQLException {
-        System.out.println("notesRemainingInAtm");
+        LOGGER.info("notesRemainingInAtm");
         StringBuilder sb = new StringBuilder();
         ResultSet rs = statement.executeQuery("select * from atmBalance");
         int rowCount = 0;
@@ -304,4 +310,5 @@ public class SQLLiteConnector {
 
         return sb.toString();
     }
+
 }
