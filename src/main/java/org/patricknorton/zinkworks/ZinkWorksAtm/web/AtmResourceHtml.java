@@ -57,7 +57,7 @@ public class AtmResourceHtml {
             model.addAttribute("newLineChar", '\n');
             model.addAttribute("message", "\nHave a wonderful day \n");
             model.addAttribute("transactionList", transactionList);
-           postToKafka( account.toString(), "profile");
+           postToKafka( account.toString(), "login");
 
             returnPage = "profile";
         }
@@ -97,7 +97,7 @@ public class AtmResourceHtml {
                 model.addAttribute("account", account);
                 model.addAttribute("newLineChar", '\n');
                 model.addAttribute("message", jsonObject.get("message"));
-                model.addAttribute("transactionList", transactionList.stream().limit(10).toArray());
+                model.addAttribute("transactionList", transactionList.stream().limit(10).toArray().toString());
                postToKafka( model.asMap().toString(), "maxWithdrawal");
 
                 returnPage = "profile";
@@ -202,7 +202,7 @@ public class AtmResourceHtml {
 
 
     private void setupProperties() {
-        properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092");
+        properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:19092");
         properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
